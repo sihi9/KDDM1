@@ -1,6 +1,9 @@
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
+from sklearn.preprocessing import LabelEncoder
+from pandas.api.types import is_object_dtype, is_numeric_dtype, is_bool_dtype
+
 
 def main():
     # Specify the path to the CSV file
@@ -16,6 +19,7 @@ def main():
     #target = 
     # Read the CSV file into a DataFrame
     df = pd.read_csv(csv_file_path)
+    df = preprocessing(df)
     
     target = 'UG_average_fees_(in_pounds)'
     # Split the data into independent variables (X) and the dependent variable (y)
@@ -24,7 +28,19 @@ def main():
 
     #linearRegression(X, y)
     supportVectorRegression(X, y)
-    
+
+
+def preprocessing(data):
+    # categorical features to numerical
+    label_encoder = LabelEncoder()
+    for x in data.columns:
+        col = data[x]
+        if is_object_dtype(col):
+            #print(x, " is object-converting")
+            data[x] = label_encoder.fit_transform(data[x])
+    return data
+
+
 def linearRegression(X, y):
     # Create an instance of the LinearRegression model
     model = LinearRegression()
