@@ -28,11 +28,11 @@ def main():
     nan_count = df["Motto"].isna().sum()
     print(nan_count )
     
-    # plotting
-    plotting(df, target='UG_average_fees_(in_pounds)')
     df = preprocessing(df)
 
     target = 'UG_average_fees_(in_pounds)'
+    # plotting
+    plotting(df, target)
 
     # plotting
     plotting(df, target='UG_average_fees_(in_pounds)')
@@ -71,9 +71,8 @@ def plot_relationship(data, var1, var2):
 
 def plotting(data, target):
     for x in data.columns:
-        if x is target:
-            continue
-        plot_relationship(data, x, target)
+        if x != target:
+            plot_relationship(data, x, target)
 
 def preprocessing(data):
     # categorical features to numerical
