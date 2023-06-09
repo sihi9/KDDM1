@@ -77,11 +77,21 @@ def plotting(data, target):
 def preprocessing(data):
     # categorical features to numerical
     label_encoder = LabelEncoder()
+    mappings = {}
     for x in data.columns:
         col = data[x]
         if is_object_dtype(col):
-            #print(x, " is object-converting")
+            # print(x, " is object-converting")
+            col[pd.isnull(col)] = 'NaN'
+            data[x] = col
             data[x] = label_encoder.fit_transform(data[x])
+
+            le_name_mapping = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
+            if 'NaN' in le_name_mapping:
+                data[x] = data[x].replace([le_name_mapping['NaN']], np.nan)
+
+            mappings[x] = le_name_mapping
+            #print(le_name_mapping)
 
     setMissing(data)
     return data
