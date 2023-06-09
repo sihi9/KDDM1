@@ -35,10 +35,8 @@ def main():
 
     target = 'UG_average_fees_(in_pounds)'
     # plotting
-    plotting(df, target)
+    plotting(df, target1)
 
-    # plotting
-    plotting(df, target='UG_average_fees_(in_pounds)')
 
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df[['UK_rank', 'World_rank']]  # Replace feature1, feature2, feature3 with your actual column names
@@ -50,13 +48,14 @@ def main():
     random_forest_regression(X_train, X_test, y_train, y_test)
 
 def plot_contourplot(data, var1, var2):
-    fig2 = sns.kdeplot(data[var1], data[var2], legend=True)
+    fig2 = sns.kdeplot(x=data[var1], y=data[var2], legend=True)
 
     plt.title('{} - {}'.format(var1, var2))
     plt.xlabel(var1)
     plt.ylabel(var2)
     plt.savefig('plots/contour-{}-{}-1.png'.format(var1, var2))
-    plt.show()
+    #plt.show()
+    plt.close()
 
 
 def plot_relationship(data, var1, var2):
@@ -66,8 +65,8 @@ def plot_relationship(data, var1, var2):
     plt.xlabel(var1)
     plt.ylabel(var2)
     plt.savefig('plots/scatter-{}-{}-1.png'.format(var1, var2))
-
-    plt.show()
+    plt.close()
+    #plt.show()
 
     plot_contourplot(data, var1, var2)
 
