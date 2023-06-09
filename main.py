@@ -25,10 +25,11 @@ def main():
 
     df = preprocessing(df)
 
+    target = 'UG_average_fees_(in_pounds)'
+
     # plotting
     plotting(df, target='UG_average_fees_(in_pounds)')
 
-    target = 'UG_average_fees_(in_pounds)'
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df[['UK_rank', 'World_rank']]  # Replace feature1, feature2, feature3 with your actual column names
     y = df[target]  # Replace target_variable with your actual column name
@@ -59,8 +60,11 @@ def plot_relationship(data, var1, var2):
 
     plot_contourplot(data, var1, var2)
 
+
 def plotting(data, target):
     for x in data.columns:
+        if x is target:
+            continue
         plot_relationship(data, x, target)
 
 def preprocessing(data):
