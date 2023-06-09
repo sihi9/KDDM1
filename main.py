@@ -3,24 +3,31 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.preprocessing import LabelEncoder
 from pandas.api.types import is_object_dtype, is_numeric_dtype, is_bool_dtype
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def main():
     # Specify the path to the CSV file
     csv_file_path = 'Universities.csv'
 
-    variables = ['Unnamed: 0', 'University_name', 'Region', 'Founded_year', 'Motto',     
+    variables = ['Unnamed: 0', 'University_name', 'Region', 'Founded_year', 'Motto',
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
        'UG_average_fees_(in_pounds)', 'PG_average_fees_(in_pounds)',
-       'International_students', 'Student_satisfaction', 'Student_enrollment', 
+       'International_students', 'Student_satisfaction', 'Student_enrollment',
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude', 'Website']
-    #target = 
+    #target =
     # Read the CSV file into a DataFrame
     df = pd.read_csv(csv_file_path)
+
+
     df = preprocessing(df)
-    
+
+    # plotting
+    plotting(df, target='UG_average_fees_(in_pounds)')
+
     target = 'UG_average_fees_(in_pounds)'
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df[['UK_rank', 'World_rank']]  # Replace feature1, feature2, feature3 with your actual column names
@@ -29,6 +36,32 @@ def main():
     #linearRegression(X, y)
     supportVectorRegression(X, y)
 
+
+def plot_contourplot(data, var1, var2):
+    fig2 = sns.kdeplot(data[var1], data[var2], legend=True)
+
+    plt.title('{} - {}'.format(var1, var2))
+    plt.xlabel(var1)
+    plt.ylabel(var2)
+    plt.savefig('plots/contour-{}-{}-1.png'.format(var1, var2))
+    plt.show()
+
+
+def plot_relationship(data, var1, var2):
+    # Create scatter plot of two variables using Matplotlib
+    plt.scatter(data[var1], data[var2])
+    plt.title('{} - {}'.format(var1, var2))
+    plt.xlabel(var1)
+    plt.ylabel(var2)
+    plt.savefig('plots/scatter-{}-{}-1.png'.format(var1, var2))
+
+    plt.show()
+
+    plot_contourplot(data, var1, var2)
+
+def plotting(data, target):
+    for x in data.columns:
+        plot_relationship(data, x, target)
 
 def preprocessing(data):
     # categorical features to numerical
