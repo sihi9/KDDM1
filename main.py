@@ -4,7 +4,7 @@ from sklearn.svm import SVR
 from sklearn.preprocessing import LabelEncoder
 from pandas.api.types import is_object_dtype, is_numeric_dtype, is_bool_dtype
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from matplotlib import pyplot as plt
 
@@ -12,9 +12,8 @@ def main():
     # Specify the path to the CSV file
     csv_file_path = 'Universities.csv'
 
-    variables = ['Unnamed: 0', 'University_name', 'Region', 'Founded_year', 'Motto',     
+    features = ['University_name', 'Region', 'Founded_year', 'Motto',     
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
-       'UG_average_fees_(in_pounds)', 'PG_average_fees_(in_pounds)',
        'International_students', 'Student_satisfaction', 'Student_enrollment', 
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
@@ -27,10 +26,11 @@ def main():
     print(nan_count )
     df = preprocessing(df)
     
-    target = 'UG_average_fees_(in_pounds)'
+    target1 = 'UG_average_fees_(in_pounds)'
+    target2 = 'PG_average_fees_(in_pounds)'
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df[['UK_rank', 'World_rank']]  # Replace feature1, feature2, feature3 with your actual column names
-    y = df[target]  # Replace target_variable with your actual column name
+    y = df[target1]  # Replace target_variable with your actual column name
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle = True, random_state = 42)
     #linearRegression(X, y)
@@ -69,6 +69,17 @@ def linearRegression( X_train, X_test, y_train, y_test):
     print("Intercept:", intercept)
 
 def supportVectorRegression( X_train, X_test, y_train, y_test):
+
+    rfr = SVR()
+    params = {
+        "kernel": ["linear", "poly", "rbf", "sigmoid", "precomputed"],
+        "C": [0.01, 0.1, 1.0, 3.],
+        "epsilon": [0.01, 0.1, 1]
+    }
+    cv = GridSearchCV(rfr, params)
+    num_targets = X_train.shape[0]
+    cv.fit(X_train, y_train)
+
     print("Support Vector Regression:")
     # Create an instance of the LinearRegression model
     model = SVR(kernel="linear")
@@ -84,9 +95,7 @@ def random_forest_regression(X_train, X_test, y_train, y_test):
     PLOT_SCORE_OVER_N_EST = True
     
     print(f"Using {X_train.shape[1]} features for random forest regression")
-    
-    num_targets = X_train.shape[0]
-    
+
     scores = list()
     
     num_estimators = np.arange(10, 200, 5)    
