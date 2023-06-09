@@ -9,16 +9,16 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
 from matplotlib import pyplot as plt
-import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPRegressor
 
 def main():
     # Specify the path to the CSV file
     csv_file_path = 'Universities.csv'
 
-    features = ['University_name', 'Region', 'Founded_year', 'Motto',     
+    features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
-       'International_students', 'Student_satisfaction', 'Student_enrollment', 
+       'International_students', 'Student_satisfaction', 'Student_enrollment',
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude', 'Website']
@@ -55,6 +55,10 @@ def main():
     #linearRegression(X, y)
     supportVectorRegression(X_train, X_test, y_train, y_test)
     #random_forest_regression(X_train, X_test, y_train, y_test)
+    #supportVectorRegression(X_train, X_test, y_train, y_test)
+    #random_forest_regression(X_train, X_test, y_train, y_test)
+    #supportVectorRegression(X, y)
+    multiLayerPerceptron(X_train, X_test, y_train, y_test)
 
 def plot_contourplot(data, var1, var2):
     fig2 = sns.kdeplot(x=data[var1], y=data[var2], legend=True)
@@ -66,6 +70,10 @@ def plot_contourplot(data, var1, var2):
     #plt.show()
     plt.close()
 
+def plot_test(data):
+    g = sns.PairGrid(data)
+    g.map(sns.scatterplot)
+    plt.show()
 
 def plot_relationship(data, var1, var2):
     # Create scatter plot of two variables using Matplotlib
@@ -128,6 +136,22 @@ def setMissing(df):
 
 def linearRegression( X_train, X_test, y_train, y_test):
     print("Linear Regression: ")
+
+
+def multiLayerPerceptron(X_train, X_test, y_train, y_test):
+    params = {
+        "solver": ["lbfgs", "adam"],
+        "learning_rate_init": [0.005,0.005, 0.01, 0.1],
+        "alpha": [1e-4, 1e-5, 1e-6, 1e-7]
+    }
+    model = MLPRegressor(solver='lbfgs', alpha=1e-5,learning_rate_init=0.001, hidden_layer_sizes=(10,), random_state=1, max_iter=1000)
+    cv = GridSearchCV(model, params)
+    cv.fit(X_train, y_train)
+
+    print(cv.score(X_train, y_train))
+    print(cv.score(X_test, y_test))
+
+def linearRegression(X_train, X_test, y_train, y_test):
     # Create an instance of the LinearRegression model
     model = LinearRegression()
 
