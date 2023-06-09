@@ -26,26 +26,35 @@ def main():
     # Read the CSV file into a DataFrame
     df = pd.read_csv(csv_file_path)
 
-    nan_count = df["Motto"].isna().sum()
-    print(nan_count )
     df = preprocessing(df)
+    df_normalized = normalize(df)
     
     target1 = 'UG_average_fees_(in_pounds)'
     target2 = 'PG_average_fees_(in_pounds)'
 
     target = 'UG_average_fees_(in_pounds)'
     # plotting
-    plotting(df, target1)
+    #plotting(df, target1)
 
 
     # Split the data into independent variables (X) and the dependent variable (y)
-    X = df[['UK_rank', 'World_rank']]  # Replace feature1, feature2, feature3 with your actual column names
-    y = df[target1]  # Replace target_variable with your actual column name
+    X = df_normalized[['UK_rank', 'World_rank']]  # Replace feature1, feature2, feature3 with your actual column names
+    y = df_normalized[target1]  # Replace target_variable with your actual column name
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle = True, random_state = 42)
+    
+    data = pd.DataFrame({
+    'Latitude': [40.7128, 34.0522, 37.7749, 29.7604],
+    'Longitude': [-74.0060, -118.2437, -122.4194, -95.3698],
+    'value': [10, 20, 15, 25]
+    })
+    
+    #plotHeatMap(df["Latitude"], df["Longitude"], y)
+
+
     #linearRegression(X, y)
-    #supportVectorRegression(X_train, X_test, y_train, y_test)
-    random_forest_regression(X_train, X_test, y_train, y_test)
+    supportVectorRegression(X_train, X_test, y_train, y_test)
+    #random_forest_regression(X_train, X_test, y_train, y_test)
 
 def plot_contourplot(data, var1, var2):
     fig2 = sns.kdeplot(x=data[var1], y=data[var2], legend=True)
@@ -76,7 +85,21 @@ def plotting(data, target):
         if x != target:
             plot_relationship(data, x, target)
 
+def plotHeatMap(lat, long, target):
+    # Create a pivot table to reshape the data for the heatmap
+    heatmap_data = plt.scatter(x=long, y=lat, c=target)
+
+    # Plot the heatmap using Matplotlib
+    plt.colorbar(label='Value')
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.title('Scatter Plot')
+    plt.show()
+
 def preprocessing(data):
+    data = data.drop(labels=[data.columns[0]], axis=1)
+    data = data.drop_duplicates()
+
     # categorical features to numerical
     label_encoder = LabelEncoder()
     mappings = {}
@@ -94,9 +117,11 @@ def preprocessing(data):
 
             mappings[x] = le_name_mapping
             #print(le_name_mapping)
-
     setMissing(data)
     return data
+
+def normalize(df):
+    return (df-df.min())/(df.max()-df.min())
 
 def setMissing(df):
     df["Founded_year"] = df["Founded_year"].replace([9999], np.nan)
@@ -116,30 +141,21 @@ def linearRegression( X_train, X_test, y_train, y_test):
     # Print the coefficients and intercept
     print("Coefficients:", coefficients)
     print("Intercept:", intercept)
-
+ 
 def supportVectorRegression( X_train, X_test, y_train, y_test):
-
+    print("Support Vector Regression:") 
     rfr = SVR()
     params = {
-        "kernel": ["linear", "poly", "rbf", "sigmoid", "precomputed"],
-        "C": [0.01, 0.1, 1.0, 3.],
-        "epsilon": [0.01, 0.1, 1]
+        "kernel": ["linear", "poly"],
+        "C": [0.01, 0.1, 1.0, np.pi, 10.],
+        "epsilon": [0.01, 0.1, 1],
+        #"degrees": [2, 3, 4]
     }
     cv = GridSearchCV(rfr, params)
-    num_targets = X_train.shape[0]
-    cv.fit(X_train, y_train)
+    cv.fit(X=X_train, y=y_train)
 
-    print("Support Vector Regression:")
-    # Create an instance of the LinearRegression model
-    model = SVR(kernel="linear")
-
-    # Fit the model to the data
-    model.fit(X_train, y_train)
-
-    # Get the coefficients and intercept
-    print(model.score(X_test, y_test))
-
-
+    print(f"best score: {cv.best_score_} with params {cv.best_params_}")
+   
 def random_forest_regression(X_train, X_test, y_train, y_test):
     PLOT_SCORE_OVER_N_EST = True
     
