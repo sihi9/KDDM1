@@ -3,7 +3,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
 from sklearn.preprocessing import LabelEncoder
 from pandas.api.types import is_object_dtype, is_numeric_dtype, is_bool_dtype
-
+import numpy as np
 
 def main():
     # Specify the path to the CSV file
@@ -38,8 +38,12 @@ def preprocessing(data):
         if is_object_dtype(col):
             #print(x, " is object-converting")
             data[x] = label_encoder.fit_transform(data[x])
+
+    setMissing(data)
     return data
 
+def setMissing(df):
+    df["Founded_year"] = df["Founded_year"].replace([9999], np.nan)
 
 def linearRegression(X, y):
     # Create an instance of the LinearRegression model
