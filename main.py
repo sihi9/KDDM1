@@ -12,17 +12,24 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
 
-def main():
-    # Specify the path to the CSV file
-    csv_file_path = 'Universities.csv'
-
-    features = ['University_name', 'Region', 'Founded_year', 'Motto',
+features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
        'International_students', 'Student_satisfaction', 'Student_enrollment',
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude', 'Website']
-    #target =
+
+used_features = features = ['Founded_year',
+       'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
+       'International_students', 'Student_satisfaction', 'Student_enrollment',
+       'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
+       'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
+       'Longitude']
+def main():
+    # Specify the path to the CSV file
+    csv_file_path = 'Universities.csv'
+
+    global used_features
     # Read the CSV file into a DataFrame
     df = pd.read_csv(csv_file_path)
 
@@ -30,17 +37,13 @@ def main():
     df_normalized = normalize(df)
     
     target1 = 'UG_average_fees_(in_pounds)'
-    target2 = 'PG_average_fees_(in_pounds)'
-
-    target = 'UG_average_fees_(in_pounds)'
-    # plotting
     #plotting(df, target1)
 
-
     # Split the data into independent variables (X) and the dependent variable (y)
-    X = df_normalized[['UK_rank', 'World_rank']]  # Replace feature1, feature2, feature3 with your actual column names
+    X = df_normalized[used_features]  # Replace feature1, feature2, feature3 with your actual column names
     y = df_normalized[target1]  # Replace target_variable with your actual column name
 
+    print(pd.isnull(X).sum())
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle = True, random_state = 42)
     
     data = pd.DataFrame({
@@ -52,13 +55,10 @@ def main():
     #plotHeatMap(df["Latitude"], df["Longitude"], y)
 
 
-    #linearRegression(X, y)
-    supportVectorRegression(X_train, X_test, y_train, y_test)
+    #linearRegression(X_train, X_test, y_train, y_test)
+    supportVectorRegression(X, y)
     #random_forest_regression(X_train, X_test, y_train, y_test)
-    #supportVectorRegression(X_train, X_test, y_train, y_test)
-    #random_forest_regression(X_train, X_test, y_train, y_test)
-    #supportVectorRegression(X, y)
-    multiLayerPerceptron(X_train, X_test, y_train, y_test)
+    multiLayerPerceptron(X, y)
 
 def plot_contourplot(data, var1, var2):
     fig2 = sns.kdeplot(x=data[var1], y=data[var2], legend=True)
@@ -104,27 +104,63 @@ def plotHeatMap(lat, long, target):
     plt.title('Scatter Plot')
     plt.show()
 
-def preprocessing(data):
-    data = data.drop(labels=[data.columns[0]], axis=1)
-    data = data.drop_duplicates()
+def range_mean(stringList, axis):
+    if stringList[0] != "NaN":
+        if stringList[0] != "over":
+            return int((int(stringList[0]) + int(stringList[1])) / 2)
+        else:
+            return int(stringList[1])
+    else:
+        return 0
 
+def founded_year_filter(year, axis):
+    if year == 9999:
+        return 0
+    if year == np.nan:
+        return 0
+    return 2023 - year
+
+def preprocessing(data):
+    data = data.drop(['University_name', 'Website', 'Motto'], axis=1)
+    data = data.drop_duplicates()
+    # Founded_year is all over the plays
+    data['Founded_year'] = data['Founded_year'].iloc[:].apply(founded_year_filter, axis=1)
+    data["Founded_year"].iloc[:][pd.isnull(data["Founded_year"])] = 0
+    data["Academic_Calender"].iloc[:][pd.isnull(data["Academic_Calender"])] = "other"
+    data["Campus_setting"].iloc[:][pd.isnull(data["Campus_setting"])] = "other"
+    data["CWUR_score"].iloc[:][pd.isnull(data["CWUR_score"])] = data["CWUR_score"].mean()
+    #print(data['Founded_year'])
+    # convert 10.00% and over-1000 into int an float
+    prozent_col = ['International_students', 'Student_satisfaction', ]
+    ranges_col = ['Student_enrollment', 'Academic_staff']
+    for pro_col in prozent_col:
+        data[pro_col] = data[pro_col].str.replace("%","")
+        data[pro_col] = pd.to_numeric(data[pro_col])
+    for rang_col in ranges_col:
+        data[rang_col] = data[rang_col].str.replace(",","")
+        data[rang_col] = data[rang_col].str.split("-")
+        data[rang_col] = data[rang_col].apply(range_mean, axis=1)
     # categorical features to numerical
     label_encoder = LabelEncoder()
     mappings = {}
     for x in data.columns:
-        col = data[x]
+        col = data[x].loc[:]
         if is_object_dtype(col):
+            #print(col)
             # print(x, " is object-converting")
             col[pd.isnull(col)] = 'NaN'
+            #print(col)
             data[x] = col
             data[x] = label_encoder.fit_transform(data[x])
-
+            #print(data[x])
             le_name_mapping = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
+            #print(le_name_mapping)
             if 'NaN' in le_name_mapping:
                 data[x] = data[x].replace([le_name_mapping['NaN']], np.nan)
 
             mappings[x] = le_name_mapping
             #print(le_name_mapping)
+    #print(data)
     setMissing(data)
     return data
 
@@ -138,18 +174,19 @@ def linearRegression( X_train, X_test, y_train, y_test):
     print("Linear Regression: ")
 
 
-def multiLayerPerceptron(X_train, X_test, y_train, y_test):
+def multiLayerPerceptron(X, y):
     params = {
         "solver": ["lbfgs", "adam"],
-        "learning_rate_init": [0.005,0.005, 0.01, 0.1],
-        "alpha": [1e-4, 1e-5, 1e-6, 1e-7]
+        "learning_rate_init": [0.005,0.005, 0.01, 0.1, 0.3],
+        "hidden_layer_sizes": [(3,3), (12,),(10,)],
+        "alpha": [1e-4, 1e-5, 1e-6,5e-6, 1e-7]
     }
-    model = MLPRegressor(solver='lbfgs', alpha=1e-5,learning_rate_init=0.001, hidden_layer_sizes=(10,), random_state=1, max_iter=1000)
-    cv = GridSearchCV(model, params)
-    cv.fit(X_train, y_train)
+    model = MLPRegressor( random_state=1, max_iter=1000)
+    cv = GridSearchCV(model, params, cv=5, n_jobs=-1)
+    cv.fit(X, y)
 
-    print(cv.score(X_train, y_train))
-    print(cv.score(X_test, y_test))
+    print(f"best score: {cv.best_score_} with params {cv.best_params_}")
+
 
 def linearRegression(X_train, X_test, y_train, y_test):
     # Create an instance of the LinearRegression model
@@ -166,17 +203,18 @@ def linearRegression(X_train, X_test, y_train, y_test):
     print("Coefficients:", coefficients)
     print("Intercept:", intercept)
  
-def supportVectorRegression( X_train, X_test, y_train, y_test):
-    print("Support Vector Regression:") 
+def supportVectorRegression( X, y):
+    print("Support Vector Regression:")
+    print(X.shape)
     rfr = SVR()
     params = {
         "kernel": ["linear", "poly"],
-        "C": [0.01, 0.1, 1.0, np.pi, 10.],
-        "epsilon": [0.01, 0.1, 1],
-        #"degrees": [2, 3, 4]
+        "C": [0.005, 0.01, 0.1, 1.0, 3, 10.],
+        "epsilon": [0.01, 0.05, 0.1, 1],
+        "degree": [2, 3, 4]
     }
-    cv = GridSearchCV(rfr, params)
-    cv.fit(X=X_train, y=y_train)
+    cv = GridSearchCV(rfr, params, n_jobs=-1, cv=5)
+    cv.fit(X=X, y=y)
 
     print(f"best score: {cv.best_score_} with params {cv.best_params_}")
    
@@ -184,7 +222,6 @@ def random_forest_regression(X_train, X_test, y_train, y_test):
     PLOT_SCORE_OVER_N_EST = True
     
     print(f"Using {X_train.shape[1]} features for random forest regression")
-
     scores = list()
     
     num_estimators = np.arange(10, 200, 5)    
@@ -193,7 +230,7 @@ def random_forest_regression(X_train, X_test, y_train, y_test):
         rf_regressor = RandomForestRegressor(n_estimators=num_estimator)
         rf_regressor.fit(X_train, y_train)
         score = rf_regressor.score(X_test, y_test)
-        #print(f"Num Estimators = {num_estimator}, Score = {score}")
+        print(f"Num Estimators = {num_estimator}, Score = {score}")
         scores.append(score)
     
     if PLOT_SCORE_OVER_N_EST:
