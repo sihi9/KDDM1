@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
 
+
 features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
        'International_students', 'Student_satisfaction', 'Student_enrollment',
@@ -37,7 +38,7 @@ def main():
     df_normalized = normalize(df)
     
     target1 = 'UG_average_fees_(in_pounds)'
-    #plotting(df, target1)
+    plotting_continuos_features(df, target1)
 
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df_normalized[used_features]  # Replace feature1, feature2, feature3 with your actual column names
@@ -75,23 +76,48 @@ def plot_test(data):
     g.map(sns.scatterplot)
     plt.show()
 
-def plot_relationship(data, var1, var2):
+def plot_relationship(data, var1, var2, ax=None, xlabel=None, ylabel=None):
     # Create scatter plot of two variables using Matplotlib
-    plt.scatter(data[var1], data[var2])
-    plt.title('{} - {}'.format(var1, var2))
-    plt.xlabel(var1)
-    plt.ylabel(var2)
-    plt.savefig('plots/scatter-{}-{}-1.png'.format(var1, var2))
+    if ax is None:
+        plt.scatter(data[var1], data[var2])
+        plt.title('{} - {}'.format(var1, var2))
+        plt.xlabel(var1)
+        plt.ylabel(var2)
+        plt.savefig('plots/scatter-{}-{}-1.png'.format(var1, var2))
+        plt.close()
+    else:
+        if xlabel=="Estimated_cost_of_living_per_year_(in_pounds)":
+            xlabel="Yearly cost of living / £"
+        ax.scatter(data[var1], data[var2], s=1)
+        ax.set_xlabel(xlabel)# should be a feature
+        ax.set_ylabel(ylabel)# should be the target
+     
+
+    #plot_contourplot(data, var1, var2)
+
+
+def plotting_continuos_features(data, target):
+    discrete_features = ['Control_type', 'Academic_Calender', 'Campus_setting', 'Region']
+    dont_plot = ['Unnamed: 0', 'PG_average_fees_(in_pounds)', target]
+    fig, axs = plt.subplots(3, 4)
+    fig.set_size_inches((11.7*1.3,8.3*1.3))
+    axs=axs.flatten()
+    fig.suptitle("Scatter Plot of Continuous Features with Target")
+    
+    axs_idx = 0
+    for idx,x in enumerate(data.columns):
+        if x not in dont_plot and x not in discrete_features:
+            ylabel = None
+            if axs_idx in [0,4,8]:
+                ylabel="tuition fee"
+                axs[axs_idx].set_yticks(np.linspace(0,np.max(data[target]),5))
+            else:
+                axs[axs_idx].set_yticks([])
+            plot_relationship(data, x, target, ax=axs[axs_idx], xlabel=x, ylabel=ylabel)
+    
+            axs_idx += 1
+    fig.savefig("scatter_plot_feature_vs_target.png")
     plt.close()
-    #plt.show()
-
-    plot_contourplot(data, var1, var2)
-
-
-def plotting(data, target):
-    for x in data.columns:
-        if x != target:
-            plot_relationship(data, x, target)
 
 def plotHeatMap(lat, long, target):
     # Create a pivot table to reshape the data for the heatmap
