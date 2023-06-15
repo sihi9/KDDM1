@@ -38,7 +38,7 @@ def main():
     df_normalized = normalize(df)
     
     target1 = 'UG_average_fees_(in_pounds)'
-    plotting_continuos_features(df, target1)
+    plotting_features(df, target1)
 
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df_normalized[used_features]  # Replace feature1, feature2, feature3 with your actual column names
@@ -96,7 +96,7 @@ def plot_relationship(data, var1, var2, ax=None, xlabel=None, ylabel=None):
     #plot_contourplot(data, var1, var2)
 
 
-def plotting_continuos_features(data, target):
+def plotting_features(data, target):
     discrete_features = ['Control_type', 'Academic_Calender', 'Campus_setting', 'Region']
     dont_plot = ['Unnamed: 0', 'PG_average_fees_(in_pounds)', target]
     fig, axs = plt.subplots(3, 4)
@@ -117,6 +117,17 @@ def plotting_continuos_features(data, target):
     
             axs_idx += 1
     fig.savefig("scatter_plot_feature_vs_target.png")
+    plt.close()
+    
+    #now discrete features
+    sns.boxplot(x="Academic_Calender",y=target, data=data)
+    plt.savefig("academic_calender_vs_target.png")
+    plt.close()
+    sns.boxplot(x="Campus_setting",y=target, data=data)
+    plt.savefig("campus_setting_vs_target.png")
+    plt.close()
+    sns.boxplot(x="Region",y=target, data=data)
+    plt.savefig("region_vs_target.png")
     plt.close()
 
 def plotHeatMap(lat, long, target):
