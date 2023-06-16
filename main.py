@@ -12,6 +12,11 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
 
+from sklearn.linear_model import Ridge
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import ElasticNet
+from sklearn.decomposition import PCA
+from sklearn.metrics import make_scorer, mean_squared_error
 
 features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
@@ -26,6 +31,8 @@ used_features = features = ['Founded_year',
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude']
+
+
 def main():
     # Specify the path to the CSV file
     csv_file_path = 'Universities.csv'
@@ -38,8 +45,10 @@ def main():
     df_normalized = normalize(df)
     
     target1 = 'UG_average_fees_(in_pounds)'
+    target2 = 'PG_average_fees_(in_pounds)'
+    #plot_total_heatmap(df)
     plotting_features(df, target1)
-
+    #used_features = ['UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score']
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df_normalized[used_features]  # Replace feature1, feature2, feature3 with your actual column names
     y = df_normalized[target1]  # Replace target_variable with your actual column name
@@ -52,14 +61,67 @@ def main():
     'Longitude': [-74.0060, -118.2437, -122.4194, -95.3698],
     'value': [10, 20, 15, 25]
     })
-    
+
     #plotHeatMap(df["Latitude"], df["Longitude"], y)
-
-
-    #linearRegression(X_train, X_test, y_train, y_test)
-    supportVectorRegression(X, y)
+    findOptimalRegressionModel(X_train, X_test, y_train, y_test)
     #random_forest_regression(X_train, X_test, y_train, y_test)
     multiLayerPerceptron(X, y)
+
+
+def findOptimalRegressionModel(X_train, X_test, y_train, y_test):
+    scorer = make_scorer(mean_squared_error, greater_is_better=False) # not used atm (instead r2 is used)
+
+    linearRegression(X_train, X_test, y_train, y_test)
+    differentRegulationLinearRegressionModels(X_train, X_test, y_train, y_test, scorer)
+
+    X_train_pca, X_test_pca = principalComponentAnalysis(X_train, X_test)
+    print("------------------with pca------------------")
+    differentRegulationLinearRegressionModels(X_train_pca, X_test_pca, y_train, y_test, scorer)
+
+    supportVectorRegression(X_train, y_train, X_test, y_test, scorer)
+    print("------------------with pca------------------")
+    supportVectorRegression(X_train_pca, y_train, X_test_pca, y_test, scorer)
+
+
+def differentRegulationLinearRegressionModels(X_train, X_test, y_train, y_test, scorer):
+    ridge_regression(X_train, X_test, y_train, y_test, scorer)
+    lasso_regression(X_train, X_test, y_train, y_test, scorer)
+    elasticnet_regression(X_train, X_test, y_train, y_test, scorer)
+
+
+def principalComponentAnalysis(X_train, X_test):
+    """
+    # find optimal nr of components
+    X_pca = PCA().fit(X_train)
+    # Explained variance ratio
+    explained_var_ratio = X_pca.explained_variance_ratio_
+    print("Explained Variance Ratio:", explained_var_ratio)
+
+    plt.plot(np.cumsum(X_pca.explained_variance_ratio_))
+    plt.xlabel('number of components')
+    plt.ylabel('cumulative explained variance')
+    plt.show()
+    plt.close()
+    """
+
+    # Perform PCA
+    n_components = 6
+    pca = PCA(n_components=n_components)  # Set the number of components you want to retain
+    X_train_pca = pca.fit_transform(X_train)
+    X_test_pca = pca.transform(X_test)
+
+
+
+    return X_train_pca, X_test_pca
+
+
+def plot_total_heatmap(df):
+    corr = df.corr()
+    plt.figure(figsize=(16, 16))
+    sns.heatmap(corr, cmap='rainbow', annot=True)
+
+    plt.show()
+    # most important
 
 def plot_contourplot(data, var1, var2):
     fig2 = sns.kdeplot(x=data[var1], y=data[var2], legend=True)
@@ -239,8 +301,70 @@ def linearRegression(X_train, X_test, y_train, y_test):
     # Print the coefficients and intercept
     print("Coefficients:", coefficients)
     print("Intercept:", intercept)
- 
-def supportVectorRegression( X, y):
+
+
+
+def ridge_regression(X_train, X_test, y_train, y_test, scorer):
+    # list of alpha to tune
+    params = {
+    'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
+           7.0, 8.0, 9.0,
+           10.0, 20, 50, 100, 500, 1000]}
+
+    ridge = Ridge()
+    cv = GridSearchCV(estimator=ridge,
+                      param_grid=params,
+                      scoring='r2',
+                      cv=5,
+                      return_train_score=True,
+                      verbose=1)
+    cv.fit(X_train, y_train)
+
+    print(f"best score: {cv.best_score_} with params {cv.best_params_} for ridge")
+    print('Test score for ridge: ', cv.score(X_test, y_test))
+
+
+def lasso_regression(X_train, X_test, y_train, y_test, scorer):
+    # list of alpha to tune
+    params = {
+    'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
+           7.0, 8.0, 9.0,
+           10.0, 20, 50, 100, 500, 1000]}
+    lasso = Lasso()
+    cv = GridSearchCV(estimator=lasso,
+                      param_grid=params,
+                      scoring='r2',
+                      cv=5,
+                      return_train_score=True,
+                      verbose=1)
+
+    cv.fit(X_train, y_train)
+
+    print(f"best score: {cv.best_score_} with params {cv.best_params_} for lasso")
+    print('Test score for lasso: ', cv.score(X_test, y_test))
+
+
+def elasticnet_regression(X_train, X_test, y_train, y_test, scorer):
+    # list of alpha to tune
+    params = {
+        'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
+                  7.0, 8.0, 9.0,
+                  10.0, 20, 50, 100, 500, 1000]}
+
+    elasticnet = ElasticNet()
+    cv = GridSearchCV(estimator=elasticnet,
+                      param_grid=params,
+                      scoring='r2',
+                      cv=5,
+                      return_train_score=True,
+                      verbose=1)
+    cv.fit(X_train, y_train)
+
+    print(f"best score: {cv.best_score_} with params {cv.best_params_} for elastic")
+    print('Test score for elasticnet: ', cv.score(X_test, y_test))
+
+
+def supportVectorRegression( X, y, X_test, y_test, scorer):
     print("Support Vector Regression:")
     print(X.shape)
     rfr = SVR()
@@ -250,10 +374,12 @@ def supportVectorRegression( X, y):
         "epsilon": [0.01, 0.05, 0.1, 1],
         "degree": [2, 3, 4]
     }
-    cv = GridSearchCV(rfr, params, n_jobs=-1, cv=5)
+    cv = GridSearchCV(rfr, params, scoring='r2', n_jobs=-1, cv=5)
     cv.fit(X=X, y=y)
 
-    print(f"best score: {cv.best_score_} with params {cv.best_params_}")
+    print(f"best score: {cv.best_score_} with params {cv.best_params_} for svr")
+    print('Test score for support vector regression: ', cv.score(X_test, y_test))
+
    
 def random_forest_regression(X_train, X_test, y_train, y_test):
     PLOT_SCORE_OVER_N_EST = True
