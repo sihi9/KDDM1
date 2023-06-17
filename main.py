@@ -59,11 +59,14 @@ def main():
     df_normalized = normalize(df)
 
     pca = PCA(n_components=1)
-    df_normalized["combined_rank"] = pca.fit_transform(df_normalized[["UK_rank", "CWUR_score", "World_rank"]])
+    rank_features = ["UK_rank", "CWUR_score", "World_rank"]
+    df_normalized["combined_rank"] = pca.fit_transform(df_normalized[rank_features])
     print(f"Varianaufklärung durch combined_rank: {pca.explained_variance_ratio_}")
     
+    used_features += ["combined_rank"]
+    for f in rank_features:
+        used_features.remove(f)
     target1 = 'UG_average_fees_(in_pounds)'
-    target2 = 'PG_average_fees_(in_pounds)'
     #plot_total_heatmap(df)
     #plotting_features(df, target1)
     #used_features = ['UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score']
@@ -127,7 +130,7 @@ def interpolate(df, target_column, predictor_columns):
     df.loc[df[target_column].isna(), target_column] = predicted_values
 
 
-def principalComponentAnalysis(X_train, X_test):
+def principalComponentAnalysis(X_train, X_test, n = 6):
     """
     # find optimal nr of components
     X_pca = PCA().fit(X_train)
@@ -143,7 +146,7 @@ def principalComponentAnalysis(X_train, X_test):
     """
 
     # Perform PCA
-    n_components = 6
+    n_components = n
     pca = PCA(n_components=n_components)  # Set the number of components you want to retain
     X_train_pca = pca.fit_transform(X_train)
     X_test_pca = pca.transform(X_test)
