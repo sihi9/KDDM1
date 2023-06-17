@@ -19,6 +19,18 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import make_scorer, mean_squared_error
 #import geopandas as gpd
 
+"""
+best score: -0.00946097207823308 with params {'alpha': 0.01, 'hidden_layer_sizes': (3, 3), 'learning_rate_init': 0.01, 'solver': 'adam'}
+Test score for MLP:  -0.01057292869188384
+Support Vector Regression:
+(116, 15)
+best score: -0.008211329115048696 with params {'C': 0.005, 'degree': 4, 'epsilon': 0.05, 'kernel': 'poly'} for svr
+Test score for support vector regression:  -0.012206627580509721
+Fitting 5 folds for each of 28 candidates, totalling 140 fits
+best score: -0.012193598080329692 with params {'alpha': 0.01} for elastic
+Test score for elasticnet:  -0.011779679211571659
+"""
+
 features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
        'International_students', 'Student_satisfaction', 'Student_enrollment',
@@ -26,7 +38,7 @@ features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude', 'Website']
 
-used_features = [
+used_features = features = [
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
        'International_students', 'Student_satisfaction', 'Student_enrollment',
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
@@ -46,13 +58,9 @@ def main():
     df_normalized = normalize(df)
 
     pca = PCA(n_components=1)
-    rank_features = ["UK_rank", "CWUR_score", "World_rank"]
-    df_normalized["combined_rank"] = pca.fit_transform(df_normalized[rank_features])
+    df_normalized["combined_rank"] = pca.fit_transform(df_normalized[["UK_rank", "CWUR_score", "World_rank"]])
     print(f"Varianaufklärung durch combined_rank: {pca.explained_variance_ratio_}")
     
-    used_features += ["combined_rank"]
-    for f in rank_features:
-        used_features.remove(f)
     target1 = 'UG_average_fees_(in_pounds)'
     target2 = 'PG_average_fees_(in_pounds)'
     #plot_total_heatmap(df)
@@ -65,6 +73,12 @@ def main():
     #plot_pivot(df[["Region", "Academic_Calender"]], index="Region", column= "Academic_Calender")
     print(pd.isnull(X).sum())
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle = True, random_state = 42)
+    
+    data = pd.DataFrame({
+    'Latitude': [40.7128, 34.0522, 37.7749, 29.7604],
+    'Longitude': [-74.0060, -118.2437, -122.4194, -95.3698],
+    'value': [10, 20, 15, 25]
+    })
 
     #plotHeatMap(df["Latitude"], df["Longitude"], y)
     #findOptimalRegressionModel(X_train, X_test, y_train, y_test)
@@ -402,7 +416,7 @@ def lasso_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_
     print('Test score for lasso: ', cv.score(X_test, y_test))
 
 
-def elasticnet_regression(X_train, X_test, y_train, y_test, scorer="r2"):
+def elasticnet_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_error"):
     # list of alpha to tune
     params = {
         'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
