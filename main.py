@@ -17,7 +17,7 @@ from sklearn.linear_model import Lasso
 from sklearn.linear_model import ElasticNet
 from sklearn.decomposition import PCA
 from sklearn.metrics import make_scorer, mean_squared_error
-import geopandas as gpd
+#import geopandas as gpd
 
 features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
@@ -26,7 +26,7 @@ features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude', 'Website']
 
-used_features = features = [
+used_features = [
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
        'International_students', 'Student_satisfaction', 'Student_enrollment',
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
@@ -49,6 +49,7 @@ def main():
     df_normalized["combined_rank"] = pca.fit_transform(df_normalized[["UK_rank", "CWUR_score", "World_rank"]])
     print(f"Varianaufklärung durch combined_rank: {pca.explained_variance_ratio_}")
     
+    used_features += "combined_rank"
     target1 = 'UG_average_fees_(in_pounds)'
     target2 = 'PG_average_fees_(in_pounds)'
     #plot_total_heatmap(df)
@@ -61,12 +62,6 @@ def main():
     #plot_pivot(df[["Region", "Academic_Calender"]], index="Region", column= "Academic_Calender")
     print(pd.isnull(X).sum())
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle = True, random_state = 42)
-    
-    data = pd.DataFrame({
-    'Latitude': [40.7128, 34.0522, 37.7749, 29.7604],
-    'Longitude': [-74.0060, -118.2437, -122.4194, -95.3698],
-    'value': [10, 20, 15, 25]
-    })
 
     #plotHeatMap(df["Latitude"], df["Longitude"], y)
     #findOptimalRegressionModel(X_train, X_test, y_train, y_test)
