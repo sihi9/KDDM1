@@ -124,7 +124,7 @@ def plot_total_heatmap(df):
     corr = df.corr()
     plt.figure(figsize=(16, 16))
     sns.heatmap(corr, cmap='rainbow', annot=True)
-    
+
     plt.show()
     # most important
 
@@ -219,18 +219,18 @@ def plotting_features(data, target):
             plot_relationship(data, x, target, ax=axs[axs_idx], xlabel=x, ylabel=ylabel)
     
             axs_idx += 1
-    fig.savefig("scatter_plot_feature_vs_target.png")
+    fig.savefig("plots/scatter_plot_feature_vs_target.png")
     plt.close()
     
     #now discrete features
     sns.boxplot(x="Academic_Calender",y=target, data=data)
-    plt.savefig("academic_calender_vs_target.png")
+    plt.savefig("plots/academic_calender_vs_target.png")
     plt.close()
     sns.boxplot(x="Campus_setting",y=target, data=data)
-    plt.savefig("campus_setting_vs_target.png")
+    plt.savefig("plots/campus_setting_vs_target.png")
     plt.close()
     sns.boxplot(x="Region",y=target, data=data)
-    plt.savefig("region_vs_target.png")
+    plt.savefig("plots/region_vs_target.png")
     plt.close()
 
 def plotHeatMap(lat, long, target):
