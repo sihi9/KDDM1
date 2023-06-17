@@ -46,10 +46,13 @@ def main():
     df_normalized = normalize(df)
 
     pca = PCA(n_components=1)
-    df_normalized["combined_rank"] = pca.fit_transform(df_normalized[["UK_rank", "CWUR_score", "World_rank"]])
+    rank_features = ["UK_rank", "CWUR_score", "World_rank"]
+    df_normalized["combined_rank"] = pca.fit_transform(df_normalized[rank_features])
     print(f"Varianaufklärung durch combined_rank: {pca.explained_variance_ratio_}")
     
     used_features += ["combined_rank"]
+    for f in rank_features:
+        used_features.remove(f)
     target1 = 'UG_average_fees_(in_pounds)'
     target2 = 'PG_average_fees_(in_pounds)'
     #plot_total_heatmap(df)
