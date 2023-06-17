@@ -26,7 +26,7 @@ features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude', 'Website']
 
-used_features = features = ['Founded_year',
+used_features = features = [
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
        'International_students', 'Student_satisfaction', 'Student_enrollment',
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
@@ -272,21 +272,19 @@ def range_mean(stringList, axis):
 
 def founded_year_filter(year, axis):
     if year == 9999:
-        return 0
-    if year == np.nan:
-        return 0
-    return 2023 - year
+        return np.nan
+    return year
 
 def preprocessing(data):
-    data = data.drop(['University_name', 'Website', 'Motto'], axis=1)
+    data = data.drop(['University_name', 'Website', 'Motto','Founded_year'], axis=1)
     data = data.drop_duplicates()
     # Founded_year is all over the plays
-    data['Founded_year'] = data['Founded_year'].iloc[:].apply(founded_year_filter, axis=1)
-    data["Founded_year"].iloc[:][pd.isnull(data["Founded_year"])] = 0
-    data["Academic_Calender"].iloc[:][pd.isnull(data["Academic_Calender"])] = "other"
+    #data['Founded_year'] = data['Founded_year'].iloc[:].apply(founded_year_filter, axis=1)
+    #data["Founded_year"].iloc[:][pd.isnull(data["Founded_year"])] = 0
+    data["Academic_Calender"].iloc[:][pd.isnull(data["Academic_Calender"])] = "nothing"
     data["Campus_setting"].iloc[:][pd.isnull(data["Campus_setting"])] = "other"
-    data["CWUR_score"].iloc[:][pd.isnull(data["CWUR_score"])] = data["CWUR_score"].mean()
-    #print(data['Founded_year'])
+    data["CWUR_score"] = data["CWUR_score"].interpolate(method="pad",axsi=1)
+
     # convert 10.00% and over-1000 into int an float
     prozent_col = ['International_students', 'Student_satisfaction', ]
     ranges_col = ['Student_enrollment', 'Academic_staff']
@@ -316,9 +314,9 @@ def preprocessing(data):
                 data[x] = data[x].replace([le_name_mapping['NaN']], np.nan)
 
             mappings[x] = le_name_mapping
-            #print(le_name_mapping)
+            print(le_name_mapping)
     #print(data)
-    setMissing(data)
+    #setMissing(data)
     return data
 
 def normalize(df):
