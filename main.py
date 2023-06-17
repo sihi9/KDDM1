@@ -93,6 +93,23 @@ def differentRegulationLinearRegressionModels(X_train, X_test, y_train, y_test, 
     lasso_regression(X_train, X_test, y_train, y_test, scorer)
     elasticnet_regression(X_train, X_test, y_train, y_test, scorer)
 
+def interpolate(df, target_column, predictor_columns):
+    # Split the DataFrame into two subsets: one with non-missing values and one with missing values
+    non_missing_subset = df.dropna(subset=[target_column])
+    missing_subset = df[df[target_column].isna()]
+
+    # Perform linear regression on the non-missing subset
+    regressor = LinearRegression()
+    regressor.fit(non_missing_subset[predictor_columns], non_missing_subset[target_column])
+
+    # Use the regression model to predict the missing values
+    predicted_values = regressor.predict(missing_subset[predictor_columns])
+
+    # Replace the missing values in the original DataFrame with the predicted values
+    df.loc[df[target_column].isna(), target_column] = predicted_values
+
+    print(df)
+
 
 def principalComponentAnalysis(X_train, X_test):
     """
