@@ -38,7 +38,7 @@ features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude', 'Website']
 
-used_features = features = [
+used_features = [
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
        'International_students', 'Student_satisfaction', 'Student_enrollment',
        'Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting',
