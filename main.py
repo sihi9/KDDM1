@@ -17,6 +17,7 @@ from sklearn.linear_model import Lasso
 from sklearn.linear_model import ElasticNet
 from sklearn.decomposition import PCA
 from sklearn.metrics import make_scorer, mean_squared_error
+import geopandas as gpd
 
 features = ['University_name', 'Region', 'Founded_year', 'Motto',
        'UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score',
@@ -53,6 +54,7 @@ def main():
     X = df_normalized[used_features]  # Replace feature1, feature2, feature3 with your actual column names
     y = df_normalized[target1]  # Replace target_variable with your actual column name
 
+    #plot_pivot(df[["Region", "Academic_Calender"]], index="Region", column= "Academic_Calender")
     print(pd.isnull(X).sum())
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle = True, random_state = 42)
     
@@ -122,9 +124,45 @@ def plot_total_heatmap(df):
     corr = df.corr()
     plt.figure(figsize=(16, 16))
     sns.heatmap(corr, cmap='rainbow', annot=True)
-
+    
     plt.show()
     # most important
+
+def plot_pivot(df, index, column):
+    data = pd.pivot_table(df, index = index, columns=column, aggfunc=len, fill_value=0)
+    f, ax = plt.subplots(figsize=(15, 6))
+    sns.heatmap(data, annot=True, fmt="d", linewidths=.5, ax=ax)
+    plt.savefig(f'plots/heatmap-{index}-{column}.png')
+    #plt.show()
+    plt.close()
+
+def get_ranks_correlation(df):
+    df["UK_inv"] = 1/df["UK_rank"]
+    df["World_inv"] = 1/df["World_rank"]
+    corr = df[['UK_rank', 'World_rank',"UK_inv", "World_inv", 'CWUR_score', 'UG_average_fees_(in_pounds)']].corr()
+    #print(corr)
+    corr.to_csv("correlations.csv", float_format='%.3f')
+
+def plot_locations(df):
+    # Load the world shapefile using geopandas
+    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+
+    # then restrict this to the United Kingdom
+    ax = world[(world.name == "United Kingdom")].plot(
+    color='white', edgecolor='black')
+
+    df = pd.read_csv("Universities.csv")
+    gdf = gpd.GeoDataFrame(
+        df, geometry=gpd.points_from_xy(df.Longitude, df.Latitude))
+
+    # then plot the geodataframe on this
+    gdf.plot(ax=ax, alpha=0.5, markersize=10)
+
+    # Customize the plot
+    plt.title('')
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.show()
 
 def plot_contourplot(data, var1, var2):
     fig2 = sns.kdeplot(x=data[var1], y=data[var2], legend=True)
