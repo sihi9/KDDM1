@@ -63,9 +63,12 @@ def main():
     })
 
     #plotHeatMap(df["Latitude"], df["Longitude"], y)
-    findOptimalRegressionModel(X_train, X_test, y_train, y_test)
+    #findOptimalRegressionModel(X_train, X_test, y_train, y_test)
     #random_forest_regression(X_train, X_test, y_train, y_test)
-    multiLayerPerceptron(X, y)
+    multiLayerPerceptron(X_train, y_train,X_test,y_test)
+    supportVectorRegression(X_train, y_train,X_test,y_test)
+    #scorer = make_scorer(mean_squared_error, greater_is_better=False)
+    elasticnet_regression(X_train, X_test, y_train, y_test)
 
 
 def findOptimalRegressionModel(X_train, X_test, y_train, y_test):
@@ -269,22 +272,23 @@ def normalize(df):
 def setMissing(df):
     df["Founded_year"] = df["Founded_year"].replace([9999], np.nan)
 
-def linearRegression( X_train, X_test, y_train, y_test):
-    print("Linear Regression: ")
 
 
-def multiLayerPerceptron(X, y):
+def multiLayerPerceptron(X_train, y_train, X_test, y_test):
     params = {
-        "solver": ["lbfgs", "adam"],
+        "solver": ["adam"],
         "learning_rate_init": [0.005,0.005, 0.01, 0.1, 0.3],
-        "hidden_layer_sizes": [(3,3), (12,),(10,)],
-        "alpha": [1e-4, 1e-5, 1e-6,5e-6, 1e-7]
+        #"hidden_layer_sizes": [(3,3), (12,),(10,)],
+        "hidden_layer_sizes": [(3,3), (3,3,3), (6,6), (10,10)],
+        "alpha": [1e-1, 1e-2, 1e-3, 1e-4, 1e-5]
     }
-    model = MLPRegressor( random_state=1, max_iter=1000)
-    cv = GridSearchCV(model, params, cv=5, n_jobs=-1)
-    cv.fit(X, y)
+    model = MLPRegressor(activation="relu", random_state=1, max_iter=1000,
+                         batch_size=32, shuffle=True)
+    cv = GridSearchCV(model, params, cv=5, n_jobs=-1, scoring="neg_mean_squared_error")
+    cv.fit(X_train, y_train)
 
     print(f"best score: {cv.best_score_} with params {cv.best_params_}")
+    print('Test score for MLP: ', cv.score(X_test, y_test))
 
 
 def linearRegression(X_train, X_test, y_train, y_test):
@@ -304,7 +308,7 @@ def linearRegression(X_train, X_test, y_train, y_test):
 
 
 
-def ridge_regression(X_train, X_test, y_train, y_test, scorer):
+def ridge_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_error"):
     # list of alpha to tune
     params = {
     'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
@@ -314,7 +318,7 @@ def ridge_regression(X_train, X_test, y_train, y_test, scorer):
     ridge = Ridge()
     cv = GridSearchCV(estimator=ridge,
                       param_grid=params,
-                      scoring='r2',
+                      scoring='neg_mean_squared_error',
                       cv=5,
                       return_train_score=True,
                       verbose=1)
@@ -324,7 +328,7 @@ def ridge_regression(X_train, X_test, y_train, y_test, scorer):
     print('Test score for ridge: ', cv.score(X_test, y_test))
 
 
-def lasso_regression(X_train, X_test, y_train, y_test, scorer):
+def lasso_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_error"):
     # list of alpha to tune
     params = {
     'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
@@ -333,7 +337,7 @@ def lasso_regression(X_train, X_test, y_train, y_test, scorer):
     lasso = Lasso()
     cv = GridSearchCV(estimator=lasso,
                       param_grid=params,
-                      scoring='r2',
+                      scoring='neg_mean_squared_error',
                       cv=5,
                       return_train_score=True,
                       verbose=1)
@@ -344,7 +348,7 @@ def lasso_regression(X_train, X_test, y_train, y_test, scorer):
     print('Test score for lasso: ', cv.score(X_test, y_test))
 
 
-def elasticnet_regression(X_train, X_test, y_train, y_test, scorer):
+def elasticnet_regression(X_train, X_test, y_train, y_test, scorer="r2"):
     # list of alpha to tune
     params = {
         'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
@@ -354,7 +358,7 @@ def elasticnet_regression(X_train, X_test, y_train, y_test, scorer):
     elasticnet = ElasticNet()
     cv = GridSearchCV(estimator=elasticnet,
                       param_grid=params,
-                      scoring='r2',
+                      scoring='neg_mean_squared_error',
                       cv=5,
                       return_train_score=True,
                       verbose=1)
@@ -364,17 +368,17 @@ def elasticnet_regression(X_train, X_test, y_train, y_test, scorer):
     print('Test score for elasticnet: ', cv.score(X_test, y_test))
 
 
-def supportVectorRegression( X, y, X_test, y_test, scorer):
+def supportVectorRegression( X, y, X_test, y_test, scorer="neg_mean_squared_error"):
     print("Support Vector Regression:")
     print(X.shape)
     rfr = SVR()
     params = {
-        "kernel": ["linear", "poly"],
+        "kernel": ["linear", "poly","sigmoid"],
         "C": [0.005, 0.01, 0.1, 1.0, 3, 10.],
         "epsilon": [0.01, 0.05, 0.1, 1],
-        "degree": [2, 3, 4]
+        "degree": [2, 3, 4, 5]
     }
-    cv = GridSearchCV(rfr, params, scoring='r2', n_jobs=-1, cv=5)
+    cv = GridSearchCV(rfr, params, scoring='neg_mean_squared_error', n_jobs=-1, cv=5)
     cv.fit(X=X, y=y)
 
     print(f"best score: {cv.best_score_} with params {cv.best_params_} for svr")
