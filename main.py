@@ -365,9 +365,7 @@ def linearRegression(X_train, X_test, y_train, y_test):
 def ridge_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_error"):
     # list of alpha to tune
     params = {
-    'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
-           7.0, 8.0, 9.0,
-           10.0, 20, 50, 100, 500, 1000]}
+    'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.5]}
 
     ridge = Ridge()
     cv = GridSearchCV(estimator=ridge,
@@ -385,9 +383,7 @@ def ridge_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_
 def lasso_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_error"):
     # list of alpha to tune
     params = {
-    'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
-           7.0, 8.0, 9.0,
-           10.0, 20, 50, 100, 500, 1000]}
+    'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.5]}
     lasso = Lasso()
     cv = GridSearchCV(estimator=lasso,
                       param_grid=params,
@@ -405,9 +401,7 @@ def lasso_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_
 def elasticnet_regression(X_train, X_test, y_train, y_test, scorer="r2"):
     # list of alpha to tune
     params = {
-        'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0,
-                  7.0, 8.0, 9.0,
-                  10.0, 20, 50, 100, 500, 1000]}
+        'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.5]}
 
     elasticnet = ElasticNet()
     cv = GridSearchCV(estimator=elasticnet,
