@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import ExtraTreesRegressor
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
@@ -82,11 +83,11 @@ def main():
 
     #plotHeatMap(df["Latitude"], df["Longitude"], y)
     #findOptimalRegressionModel(X_train, X_test, y_train, y_test)
-    #random_forest_regression(X_train, X_test, y_train, y_test)
-    multiLayerPerceptron(X_train, y_train,X_test,y_test)
-    supportVectorRegression(X_train, y_train,X_test,y_test)
+    random_forest_regression(X_train, X_test, y_train, y_test)
+    #multiLayerPerceptron(X_train, y_train,X_test,y_test)
+    #supportVectorRegression(X_train, y_train,X_test,y_test)
     #scorer = make_scorer(mean_squared_error, greater_is_better=False)
-    elasticnet_regression(X_train, X_test, y_train, y_test)
+    #elasticnet_regression(X_train, X_test, y_train, y_test)
 
 
 def findOptimalRegressionModel(X_train, X_test, y_train, y_test):
@@ -347,12 +348,13 @@ def multiLayerPerceptron(X_train, y_train, X_test, y_test):
         "solver": ["adam"],
         "learning_rate_init": [0.005,0.005, 0.01, 0.1, 0.3],
         #"hidden_layer_sizes": [(3,3), (12,),(10,)],
-        "hidden_layer_sizes": [(3,3), (3,3,3), (6,6), (10,10)],
-        "alpha": [1e-1, 1e-2, 1e-3, 1e-4, 1e-5]
+        "hidden_layer_sizes": [(42, 42), (69, 96), (69,69)],
+        "alpha": [1e-1, 1e-2, 1e-3, 1e-4, 1e-5],
+        "activation": ["relu", "tanh"]
     }
-    model = MLPRegressor(activation="relu", random_state=1, max_iter=1000,
+    model = MLPRegressor(max_iter=1000,random_state=42,
                          batch_size=32, shuffle=True)
-    cv = GridSearchCV(model, params, cv=5, n_jobs=-1, scoring="neg_mean_squared_error")
+    cv = GridSearchCV(model, params, cv=5, n_jobs=-1, scoring="neg_mean_squared_error",)
     cv.fit(X_train, y_train)
 
     print(f"best score: {cv.best_score_} with params {cv.best_params_}")
@@ -448,19 +450,24 @@ def supportVectorRegression( X, y, X_test, y_test, scorer="neg_mean_squared_erro
 
    
 def random_forest_regression(X_train, X_test, y_train, y_test):
-    PLOT_SCORE_OVER_N_EST = True
+    PLOT_SCORE_OVER_N_EST = False
     
     print(f"Using {X_train.shape[1]} features for random forest regression")
-    scores = list()
+  
     
-    num_estimators = np.arange(10, 200, 5)    
+    rf_regressor = RandomForestRegressor()
+    #rf_regressor.fit(X_train, y_train)
+    #score = rf_regressor.score(X_test, y_test)
+    params = {"n_estimators":[100]}
+    cv = GridSearchCV(rf_regressor, params, scoring="neg_mean_squared_error", cv=5)
+    cv.fit(X=X_train, y=y_train)
+    print(f"Test Score = {cv.score(X_test, y_test)}")
     
-    for num_estimator in num_estimators:
-        rf_regressor = RandomForestRegressor(n_estimators=num_estimator)
-        rf_regressor.fit(X_train, y_train)
-        score = rf_regressor.score(X_test, y_test)
-        print(f"Num Estimators = {num_estimator}, Score = {score}")
-        scores.append(score)
+    erf_regressor = ExtraTreesRegressor(n_estimators=100)
+    params = {"n_estimators":[100]}
+    cv = GridSearchCV(erf_regressor, params, scoring="neg_mean_squared_error", cv=5)
+    cv.fit(X=X_train, y=y_train)
+    print(f"Test Score = {cv.score(X_test, y_test)}")
     
     if PLOT_SCORE_OVER_N_EST:
         fig, ax = plt.subplots()
