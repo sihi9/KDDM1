@@ -44,11 +44,15 @@ def main():
 
     df = preprocessing(df)
     df_normalized = normalize(df)
+
+    pca = PCA(n_components=1)
+    df_normalized["combined_rank"] = pca.fit_transform(df_normalized[["UK_rank", "CWUR_score", "World_rank"]])
+    print(f"Varianaufklärung durch combined_rank: {pca.explained_variance_ratio_}")
     
     target1 = 'UG_average_fees_(in_pounds)'
     target2 = 'PG_average_fees_(in_pounds)'
     #plot_total_heatmap(df)
-    plotting_features(df, target1)
+    #plotting_features(df, target1)
     #used_features = ['UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score']
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df_normalized[used_features]  # Replace feature1, feature2, feature3 with your actual column names
@@ -100,15 +104,14 @@ def interpolate(df, target_column, predictor_columns):
 
     # Perform linear regression on the non-missing subset
     regressor = LinearRegression()
-    regressor.fit(non_missing_subset[predictor_columns], non_missing_subset[target_column])
 
+    regressor.fit(non_missing_subset[predictor_columns], non_missing_subset[target_column])
+    print(regressor.score(non_missing_subset[predictor_columns], non_missing_subset[target_column]))
     # Use the regression model to predict the missing values
     predicted_values = regressor.predict(missing_subset[predictor_columns])
 
     # Replace the missing values in the original DataFrame with the predicted values
     df.loc[df[target_column].isna(), target_column] = predicted_values
-
-    print(df)
 
 
 def principalComponentAnalysis(X_train, X_test):
@@ -283,8 +286,8 @@ def preprocessing(data):
     #data["Founded_year"].iloc[:][pd.isnull(data["Founded_year"])] = 0
     data["Academic_Calender"].iloc[:][pd.isnull(data["Academic_Calender"])] = "nothing"
     data["Campus_setting"].iloc[:][pd.isnull(data["Campus_setting"])] = "other"
-    data["CWUR_score"] = data["CWUR_score"].interpolate(method="pad",axsi=1)
 
+    interpolate(data, "CWUR_score", ['UK_rank', 'World_rank'])
     # convert 10.00% and over-1000 into int an float
     prozent_col = ['International_students', 'Student_satisfaction', ]
     ranges_col = ['Student_enrollment', 'Academic_staff']
