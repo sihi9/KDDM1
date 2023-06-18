@@ -46,6 +46,7 @@ used_features = [
        'Estimated_cost_of_living_per_year_(in_pounds)', 'Latitude',
        'Longitude']
 
+nominal_features = ['Academic_staff', 'Control_type', 'Academic_Calender', 'Campus_setting']
 
 def main():
     # Specify the path to the CSV file
@@ -85,7 +86,7 @@ def main():
     })
 
     #plotHeatMap(df["Latitude"], df["Longitude"], y)
-    #findOptimalRegressionModel(X_train, X_test, y_train, y_test)
+    findOptimalRegressionModel(X_train, X_test, y_train, y_test, nominal_features)
     random_forest_regression(X_train, X_test, y_train, y_test)
     #multiLayerPerceptron(X_train, y_train,X_test,y_test)
     #supportVectorRegression(X_train, y_train,X_test,y_test)
@@ -93,19 +94,19 @@ def main():
     #elasticnet_regression(X_train, X_test, y_train, y_test)
 
 
-def findOptimalRegressionModel(X_train, X_test, y_train, y_test):
+def findOptimalRegressionModel(X_train, X_test, y_train, y_test, nominal_features):
+    # drop nominal features
+    X_train_lin = X_train.drop(columns=nominal_features)
+    X_test_lin = X_test.drop(columns=nominal_features)
+
     scorer = make_scorer(mean_squared_error, greater_is_better=False) # not used atm (instead r2 is used)
 
-    linearRegression(X_train, X_test, y_train, y_test)
-    differentRegulationLinearRegressionModels(X_train, X_test, y_train, y_test, scorer)
+    linearRegression(X_train_lin, X_test_lin, y_train, y_test)
+    differentRegulationLinearRegressionModels(X_train_lin, X_test_lin, y_train, y_test, scorer)
 
-    X_train_pca, X_test_pca = principalComponentAnalysis(X_train, X_test)
+    X_train_pca, X_test_pca = principalComponentAnalysis(X_train_lin, X_test_lin)
     print("------------------with pca------------------")
     differentRegulationLinearRegressionModels(X_train_pca, X_test_pca, y_train, y_test, scorer)
-
-    supportVectorRegression(X_train, y_train, X_test, y_test, scorer)
-    print("------------------with pca------------------")
-    supportVectorRegression(X_train_pca, y_train, X_test_pca, y_test, scorer)
 
 
 def differentRegulationLinearRegressionModels(X_train, X_test, y_train, y_test, scorer):
