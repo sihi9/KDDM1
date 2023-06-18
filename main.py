@@ -18,7 +18,8 @@ from sklearn.linear_model import Lasso
 from sklearn.linear_model import ElasticNet
 from sklearn.decomposition import PCA
 from sklearn.metrics import make_scorer, mean_squared_error
-#import geopandas as gpd
+
+# import geopandas as gpd
 
 """
 best score: -0.00946097207823308 with params {'alpha': 0.01, 'hidden_layer_sizes': (3, 3), 'learning_rate_init': 0.01, 'solver': 'adam'}
@@ -63,35 +64,25 @@ def main():
     rank_features = ["UK_rank", "CWUR_score", "World_rank"]
     df_normalized["combined_rank"] = pca.fit_transform(df_normalized[rank_features])
     print(f"Varianaufklärung durch combined_rank: {pca.explained_variance_ratio_}")
-    
+
     used_features += ["combined_rank"]
     for f in rank_features:
         used_features.remove(f)
     target1 = 'UG_average_fees_(in_pounds)'
-    #plot_total_heatmap(df)
-    #plotting_features(df, target1)
-    #used_features = ['UK_rank', 'World_rank', 'CWUR_score', 'Minimum_IELTS_score']
+    plotting_features(df, target1)
     # Split the data into independent variables (X) and the dependent variable (y)
     X = df_normalized[used_features]  # Replace feature1, feature2, feature3 with your actual column names
     y = df_normalized[target1]  # Replace target_variable with your actual column name
 
-    #plot_pivot(df[["Region", "Academic_Calender"]], index="Region", column= "Academic_Calender")
-    print(pd.isnull(X).sum())
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle = True, random_state = 42)
-    
-    data = pd.DataFrame({
-    'Latitude': [40.7128, 34.0522, 37.7749, 29.7604],
-    'Longitude': [-74.0060, -118.2437, -122.4194, -95.3698],
-    'value': [10, 20, 15, 25]
-    })
+    plot_pivot(df[["Region", "Academic_Calender"]], index="Region", column= "Academic_Calender")
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=True, random_state=42)
 
-    #plotHeatMap(df["Latitude"], df["Longitude"], y)
     findOptimalRegressionModel(X_train, X_test, y_train, y_test, nominal_features)
     random_forest_regression(X_train, X_test, y_train, y_test)
-    #multiLayerPerceptron(X_train, y_train,X_test,y_test)
-    #supportVectorRegression(X_train, y_train,X_test,y_test)
-    #scorer = make_scorer(mean_squared_error, greater_is_better=False)
-    #elasticnet_regression(X_train, X_test, y_train, y_test)
+    multiLayerPerceptron(X_train, y_train, X_test, y_test)
+    supportVectorRegression(X_train, y_train, X_test, y_test)
+    X_train_pca, X_test_pca = principalComponentAnalysis(X_train, X_test)
+    elasticnet_regression(X_train_pca, X_test_pca, y_train, y_test)
 
 
 def findOptimalRegressionModel(X_train, X_test, y_train, y_test, nominal_features):
@@ -108,11 +99,16 @@ def findOptimalRegressionModel(X_train, X_test, y_train, y_test, nominal_feature
     print("------------------with pca------------------")
     differentRegulationLinearRegressionModels(X_train_pca, X_test_pca, y_train, y_test, scorer)
 
+    supportVectorRegression(X_train, y_train, X_test, y_test, scorer)
+    print("------------------with pca------------------")
+    supportVectorRegression(X_train_pca, y_train, X_test_pca, y_test, scorer)
+
 
 def differentRegulationLinearRegressionModels(X_train, X_test, y_train, y_test, scorer):
     ridge_regression(X_train, X_test, y_train, y_test, scorer)
     lasso_regression(X_train, X_test, y_train, y_test, scorer)
     elasticnet_regression(X_train, X_test, y_train, y_test, scorer)
+
 
 def interpolate(df, target_column, predictor_columns):
     # Split the DataFrame into two subsets: one with non-missing values and one with missing values
@@ -131,7 +127,7 @@ def interpolate(df, target_column, predictor_columns):
     df.loc[df[target_column].isna(), target_column] = predicted_values
 
 
-def principalComponentAnalysis(X_train, X_test, n = 6):
+def principalComponentAnalysis(X_train, X_test, n=6):
     """
     # find optimal nr of components
     X_pca = PCA().fit(X_train)
@@ -152,8 +148,6 @@ def principalComponentAnalysis(X_train, X_test, n = 6):
     X_train_pca = pca.fit_transform(X_train)
     X_test_pca = pca.transform(X_test)
 
-
-
     return X_train_pca, X_test_pca
 
 
@@ -165,20 +159,23 @@ def plot_total_heatmap(df):
     plt.show()
     # most important
 
+
 def plot_pivot(df, index, column):
-    data = pd.pivot_table(df, index = index, columns=column, aggfunc=len, fill_value=0)
+    data = pd.pivot_table(df, index=index, columns=column, aggfunc=len, fill_value=0)
     f, ax = plt.subplots(figsize=(15, 6))
     sns.heatmap(data, annot=True, fmt="d", linewidths=.5, ax=ax)
     plt.savefig(f'plots/heatmap-{index}-{column}.png')
-    #plt.show()
+    # plt.show()
     plt.close()
 
+
 def get_ranks_correlation(df):
-    df["UK_inv"] = 1/df["UK_rank"]
-    df["World_inv"] = 1/df["World_rank"]
-    corr = df[['UK_rank', 'World_rank',"UK_inv", "World_inv", 'CWUR_score', 'UG_average_fees_(in_pounds)']].corr()
-    #print(corr)
+    df["UK_inv"] = 1 / df["UK_rank"]
+    df["World_inv"] = 1 / df["World_rank"]
+    corr = df[['UK_rank', 'World_rank', "UK_inv", "World_inv", 'CWUR_score', 'UG_average_fees_(in_pounds)']].corr()
+    # print(corr)
     corr.to_csv("correlations.csv", float_format='%.3f')
+
 
 def plot_locations(df):
     # Load the world shapefile using geopandas
@@ -186,7 +183,7 @@ def plot_locations(df):
 
     # then restrict this to the United Kingdom
     ax = world[(world.name == "United Kingdom")].plot(
-    color='white', edgecolor='black')
+        color='white', edgecolor='black')
 
     df = pd.read_csv("Universities.csv")
     gdf = gpd.GeoDataFrame(
@@ -201,6 +198,7 @@ def plot_locations(df):
     plt.ylabel('Latitude')
     plt.show()
 
+
 def plot_contourplot(data, var1, var2):
     fig2 = sns.kdeplot(x=data[var1], y=data[var2], legend=True)
 
@@ -208,13 +206,9 @@ def plot_contourplot(data, var1, var2):
     plt.xlabel(var1)
     plt.ylabel(var2)
     plt.savefig('plots/contour-{}-{}-1.png'.format(var1, var2))
-    #plt.show()
+    # plt.show()
     plt.close()
 
-def plot_test(data):
-    g = sns.PairGrid(data)
-    g.map(sns.scatterplot)
-    plt.show()
 
 def plot_relationship(data, var1, var2, ax=None, xlabel=None, ylabel=None):
     # Create scatter plot of two variables using Matplotlib
@@ -226,60 +220,49 @@ def plot_relationship(data, var1, var2, ax=None, xlabel=None, ylabel=None):
         plt.savefig('plots/scatter-{}-{}-1.png'.format(var1, var2))
         plt.close()
     else:
-        if xlabel=="Estimated_cost_of_living_per_year_(in_pounds)":
-            xlabel="Yearly cost of living / £"
+        if xlabel == "Estimated_cost_of_living_per_year_(in_pounds)":
+            xlabel = "Yearly cost of living / £"
         ax.scatter(data[var1], data[var2], s=1)
-        ax.set_xlabel(xlabel)# should be a feature
-        ax.set_ylabel(ylabel)# should be the target
-     
+        ax.set_xlabel(xlabel)  # should be a feature
+        ax.set_ylabel(ylabel)  # should be the target
 
-    #plot_contourplot(data, var1, var2)
+    # plot_contourplot(data, var1, var2)
 
 
 def plotting_features(data, target):
     discrete_features = ['Control_type', 'Academic_Calender', 'Campus_setting', 'Region']
     dont_plot = ['Unnamed: 0', 'PG_average_fees_(in_pounds)', target]
     fig, axs = plt.subplots(3, 4)
-    fig.set_size_inches((11.7*1.3,8.3*1.3))
-    axs=axs.flatten()
+    fig.set_size_inches((11.7 * 1.3, 8.3 * 1.3))
+    axs = axs.flatten()
     fig.suptitle("Scatter Plot of Continuous Features with Target")
-    
+
     axs_idx = 0
-    for idx,x in enumerate(data.columns):
+    for idx, x in enumerate(data.columns):
         if x not in dont_plot and x not in discrete_features:
             ylabel = None
-            if axs_idx in [0,4,8]:
-                ylabel="tuition fee"
-                axs[axs_idx].set_yticks(np.linspace(0,np.max(data[target]),5))
+            if axs_idx in [0, 4, 8]:
+                ylabel = "tuition fee"
+                axs[axs_idx].set_yticks(np.linspace(0, np.max(data[target]), 5))
             else:
                 axs[axs_idx].set_yticks([])
             plot_relationship(data, x, target, ax=axs[axs_idx], xlabel=x, ylabel=ylabel)
-    
+
             axs_idx += 1
     fig.savefig("plots/scatter_plot_feature_vs_target.png")
     plt.close()
-    
-    #now discrete features
-    sns.boxplot(x="Academic_Calender",y=target, data=data)
+
+    # now discrete features
+    sns.boxplot(x="Academic_Calender", y=target, data=data)
     plt.savefig("plots/academic_calender_vs_target.png")
     plt.close()
-    sns.boxplot(x="Campus_setting",y=target, data=data)
+    sns.boxplot(x="Campus_setting", y=target, data=data)
     plt.savefig("plots/campus_setting_vs_target.png")
     plt.close()
-    sns.boxplot(x="Region",y=target, data=data)
+    sns.boxplot(x="Region", y=target, data=data)
     plt.savefig("plots/region_vs_target.png")
     plt.close()
 
-def plotHeatMap(lat, long, target):
-    # Create a pivot table to reshape the data for the heatmap
-    heatmap_data = plt.scatter(x=long, y=lat, c=target)
-
-    # Plot the heatmap using Matplotlib
-    plt.colorbar(label='Value')
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
-    plt.title('Scatter Plot')
-    plt.show()
 
 def range_mean(stringList, axis):
     if stringList[0] != "NaN":
@@ -290,29 +273,31 @@ def range_mean(stringList, axis):
     else:
         return 0
 
+
 def founded_year_filter(year, axis):
     if year == 9999:
         return np.nan
     return year
 
+
 def preprocessing(data):
-    data = data.drop(['University_name', 'Website', 'Motto','Founded_year'], axis=1)
+    data = data.drop(['University_name', 'Website', 'Motto', 'Founded_year'], axis=1)
     data = data.drop_duplicates()
     # Founded_year is all over the plays
-    #data['Founded_year'] = data['Founded_year'].iloc[:].apply(founded_year_filter, axis=1)
-    #data["Founded_year"].iloc[:][pd.isnull(data["Founded_year"])] = 0
+    # data['Founded_year'] = data['Founded_year'].iloc[:].apply(founded_year_filter, axis=1)
+    # data["Founded_year"].iloc[:][pd.isnull(data["Founded_year"])] = 0
     data["Academic_Calender"].iloc[:][pd.isnull(data["Academic_Calender"])] = "nothing"
-    data["Campus_setting"].iloc[:][pd.isnull(data["Campus_setting"])] = "other"
+    data["Campus_setting"].iloc[:][pd.isnull(data["Campus_setting"])] = "nothing"
 
     interpolate(data, "CWUR_score", ['UK_rank', 'World_rank'])
     # convert 10.00% and over-1000 into int an float
     prozent_col = ['International_students', 'Student_satisfaction', ]
     ranges_col = ['Student_enrollment', 'Academic_staff']
     for pro_col in prozent_col:
-        data[pro_col] = data[pro_col].str.replace("%","")
+        data[pro_col] = data[pro_col].str.replace("%", "")
         data[pro_col] = pd.to_numeric(data[pro_col])
     for rang_col in ranges_col:
-        data[rang_col] = data[rang_col].str.replace(",","")
+        data[rang_col] = data[rang_col].str.replace(",", "")
         data[rang_col] = data[rang_col].str.split("-")
         data[rang_col] = data[rang_col].apply(range_mean, axis=1)
     # categorical features to numerical
@@ -321,42 +306,46 @@ def preprocessing(data):
     for x in data.columns:
         col = data[x].loc[:]
         if is_object_dtype(col):
-            #print(col)
+            # print(col)
             # print(x, " is object-converting")
             col[pd.isnull(col)] = 'NaN'
-            #print(col)
+            # print(col)
             data[x] = col
             data[x] = label_encoder.fit_transform(data[x])
-            #print(data[x])
+            # print(data[x])
             le_name_mapping = dict(zip(label_encoder.classes_, label_encoder.transform(label_encoder.classes_)))
-            #print(le_name_mapping)
+            # print(le_name_mapping)
             if 'NaN' in le_name_mapping:
                 data[x] = data[x].replace([le_name_mapping['NaN']], np.nan)
 
             mappings[x] = le_name_mapping
             print(le_name_mapping)
-    #print(data)
-    #setMissing(data)
+    # print(data)
+    # setMissing(data)
     return data
 
+
 def normalize(df):
-    return (df-df.min())/(df.max()-df.min())
+    return (df - df.min()) / (df.max() - df.min())
+
 
 def setMissing(df):
     df["Founded_year"] = df["Founded_year"].replace([9999], np.nan)
 
 
+params = {'alpha': 0.0001, 'hidden_layer_sizes': (50, 50, 50),
+          'learning_rate_init': 0.01, 'solver': 'adam', 'random_state': 42,
+          'batch_size': 32}
+
 
 def multiLayerPerceptron(X_train, y_train, X_test, y_test):
     params = {
         "solver": ["adam"],
-        "learning_rate_init": [0.005,0.005, 0.01, 0.1, 0.3],
-        #"hidden_layer_sizes": [(3,3), (12,),(10,)],
-        "hidden_layer_sizes": [(42, 42), (69, 96), (69,69)],
-        "alpha": [1e-1, 1e-2, 1e-3, 1e-4, 1e-5],
-        "activation": ["relu", "tanh"]
+        "learning_rate_init": [0.005, 0.005, 0.01, 0.1, 0.3],
+        "hidden_layer_sizes": [(50, 50, 50), (50, 50), (50, 25), (100, 50, 25)],
+        "alpha": [1e-1, 1e-2, 1e-3, 1e-4, 1e-5]
     }
-    model = MLPRegressor(max_iter=1000,random_state=42,
+    model = MLPRegressor(activation="relu", random_state=42, max_iter=1000,
                          batch_size=32, shuffle=True)
     cv = GridSearchCV(model, params, cv=5, n_jobs=-1, scoring="neg_mean_squared_error",)
     cv.fit(X_train, y_train)
@@ -381,11 +370,10 @@ def linearRegression(X_train, X_test, y_train, y_test):
     print("Intercept:", intercept)
 
 
-
 def ridge_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_error"):
     # list of alpha to tune
     params = {
-    'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.5]}
+        'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.5]}
 
     ridge = Ridge()
     cv = GridSearchCV(estimator=ridge,
@@ -403,7 +391,7 @@ def ridge_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_
 def lasso_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squared_error"):
     # list of alpha to tune
     params = {
-    'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.5]}
+        'alpha': [0.0001, 0.001, 0.01, 0.05, 0.1, 0.5]}
     lasso = Lasso()
     cv = GridSearchCV(estimator=lasso,
                       param_grid=params,
@@ -436,12 +424,12 @@ def elasticnet_regression(X_train, X_test, y_train, y_test, scorer="neg_mean_squ
     print('Test score for elasticnet: ', cv.score(X_test, y_test))
 
 
-def supportVectorRegression( X, y, X_test, y_test, scorer="neg_mean_squared_error"):
+def supportVectorRegression(X, y, X_test, y_test, scorer="neg_mean_squared_error"):
     print("Support Vector Regression:")
     print(X.shape)
     rfr = SVR()
     params = {
-        "kernel": ["linear", "poly","sigmoid"],
+        "kernel": ["linear", "poly", "sigmoid"],
         "C": [0.005, 0.01, 0.1, 1.0, 3, 10.],
         "epsilon": [0.01, 0.05, 0.1, 1],
         "degree": [2, 3, 4, 5]
@@ -452,13 +440,13 @@ def supportVectorRegression( X, y, X_test, y_test, scorer="neg_mean_squared_erro
     print(f"best score: {cv.best_score_} with params {cv.best_params_} for svr")
     print('Test score for support vector regression: ', cv.score(X_test, y_test))
 
-   
+
 def random_forest_regression(X_train, X_test, y_train, y_test):
     PLOT_SCORE_OVER_N_EST = False
     
     print(f"Using {X_train.shape[1]} features for random forest regression")
-  
-    
+
+
     rf_regressor = RandomForestRegressor()
     #rf_regressor.fit(X_train, y_train)
     #score = rf_regressor.score(X_test, y_test)
@@ -466,7 +454,7 @@ def random_forest_regression(X_train, X_test, y_train, y_test):
     cv = GridSearchCV(rf_regressor, params, scoring="neg_mean_squared_error", cv=5)
     cv.fit(X=X_train, y=y_train)
     print(f"Test Score = {cv.score(X_test, y_test)}")
-    
+
     erf_regressor = ExtraTreesRegressor(n_estimators=100)
     params = {"n_estimators":[100]}
     cv = GridSearchCV(erf_regressor, params, scoring="neg_mean_squared_error", cv=5)
@@ -475,15 +463,15 @@ def random_forest_regression(X_train, X_test, y_train, y_test):
     
     if PLOT_SCORE_OVER_N_EST:
         fig, ax = plt.subplots()
-        fig.set_size_inches((8,8))
-        
+        fig.set_size_inches((8, 8))
+
         ax.plot(num_estimators, scores, ".b")
         ax.set_xlabel("Number of random forest estimators")
         ax.set_ylabel("Score (R^2) / 1")
         fig.suptitle("Score of Random Forest for Different Number of Estimators")
         fig.savefig("random_forest_score.png")
         plt.close()
-        
+
 
 if __name__ == '__main__':
     main()
